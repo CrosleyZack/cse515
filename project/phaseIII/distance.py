@@ -28,6 +28,20 @@ class Distance():
 
         distances = table.sub(vector, axis='columns').abs().pow(p).sum(1).pow(1/p)
         return distances
+    
+    @staticmethod
+    def E_distance(vector1, vector2):
+        vector1 = np.array(vector1, dtype=np.float)
+        vector2 = np.array(vector2, dtype=np.float)
+        distances = np.power(np.sum(np.power((vector1 - vector2), 3)), (1./3))
+        return distances
+
+    @staticmethod
+    def E2_distance(vector1, vector2):
+        vector1 = np.array(vector1, dtype=np.float)
+        vector2 = np.array(vector2, dtype=np.float)
+        distances = np.sqrt(np.sum(np.power((vector1 - vector2), 2)))
+        return distances
 
 ##
 # Default Similarity class which uses dictionary keys (feature ids) to compare two vectors. Should
@@ -55,6 +69,16 @@ class Similarity():
         similarity = cosine_similarity(table1, table2)
 
         return pd.DataFrame(data=similarity, index=index1, columns=index2)
+    
+    # finds similarity between two vectors (numpy arrays)
+    @staticmethod
+    def cos_similarity(vector1, vector2):
+
+        vector1 = np.array(vector1, dtype=np.float)
+        vector2 = np.array(vector2, dtype=np.float)
+        similarity = np.dot(vector1, vector2) / (np.dot(vector1, vector1) * np.dot(vector2, vector2))
+
+        return similarity
 
 
 class Scoring():

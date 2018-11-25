@@ -114,7 +114,8 @@ class Graph():
         n = self.__get_node_by_name__(node) 
         n[label] = value
         return n
-        
+    
+
 
     def __get_node_by_name__(self, name, graph=None):
         """
@@ -388,6 +389,23 @@ class Graph():
     
 
 
+    def display_text(self, graph=None, file=stdout):
+        """
+        """
+        if isinstance(file, str):
+            file = open(file, 'w+')
+        
+        if graph is None:
+            graph = self.__graph__
+        
+        for node in graph.vs():
+            neighbors = node.neighbors(mode='out')
+            names = [int(a['name']) for a in neighbors]
+            file.write(f"Node {int(node['name'])} : Neighbors = {names}\n")
+
+
+
+
     def display_clusters_text(self, clusters=None, keys=None, file=stdout):
         """
         Show clusters as text. Saves them to file if a file is specified, else goes to stdout.
@@ -396,7 +414,7 @@ class Graph():
         :param str filename: filename to print to. If no file, uses stdout.
         """
         if isinstance(file, str):
-            file = open(file, 'r+')
+            file = open(file, 'w+')
         
         if clusters is None:
             clusters = self.clusters
@@ -404,10 +422,10 @@ class Graph():
         if keys is None:
             keys = clusters.keys()
 
-        for cluster in clusters:
-            file.write('CLUSTER = %s' % cluster)
+        for cluster in keys:
+            file.write('CLUSTER = %s\n' % cluster)
             for img in clusters[cluster]:
-                file.write('\t%s' % img)
+                file.write('\t%s\n' % img)
 
     
 

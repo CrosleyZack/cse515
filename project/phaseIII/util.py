@@ -30,6 +30,7 @@ def show_images(images, db):
     :param list images: list of image id's.
     :param Database db:
     """
+    images = [int(image) for image in images]
     files = get_img_files(images, db)
     show_files(files)
 
