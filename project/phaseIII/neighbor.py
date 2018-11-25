@@ -13,6 +13,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from numpy import union1d
 from database import Database
 from sklearn.neighbors import KNeighborsClassifier
+import pandas as pd
 
 
 # A class is implemented for this tuple to ensure that
@@ -138,17 +139,24 @@ class Neighbor():
             efficiency and because the professor seems to suggest this is acceptable.
         """
         # edit table to get only desired imageIds(received from LSH bucketing) to be included
+        num_comparisons = len(those_images)
 
-        whole_table = database.get_vis_table()
+        whole_table = pd.DataFrame(database.get_vis_table())
+        whole_table = whole_table.T
+        whole_table = whole_table.to_dict('list')
 
-        table = []
+        table = {}
         for image in those_images:
-            table.append(whole_table[image])
+            table[image] = whole_table[image]
+
+        table = pd.DataFrame.from_dict(table, orient='index')
+        # print(table)
 
         vector = table.loc[this_image]
+        print(vector)
         vec_indexes = vector.nonzero()[0]
         vector = vector[vec_indexes]
 
         table = table.iloc[:, vec_indexes]
 
-        return Neighbor.knn(k, vector, table, processes)
+        return Neighbor.knn(k, vector, table, processes), num_comparisons

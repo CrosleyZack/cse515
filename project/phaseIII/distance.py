@@ -29,18 +29,18 @@ class Distance():
         distances = table.sub(vector, axis='columns').abs().pow(p).sum(1).pow(1/p)
         return distances
     
-    @staticmethod
+   @staticmethod
     def E_distance(vector1, vector2):
         vector1 = np.array(vector1, dtype=np.float)
         vector2 = np.array(vector2, dtype=np.float)
-        distances = np.power(np.sum(np.power((vector1 - vector2), 3)), (1 / 3))
+        distances = np.power(np.sum(np.power((vector1 - vector2), 3)), (1./3))
         return distances
 
     @staticmethod
     def E2_distance(vector1, vector2):
         vector1 = np.array(vector1, dtype=np.float)
         vector2 = np.array(vector2, dtype=np.float)
-        distances = np.power(np.sum(np.power((vector1 - vector2), 2)), (1 / 2))
+        distances = np.sqrt(np.sum(np.power((vector1 - vector2), 2)))
         return distances
 
 ##
