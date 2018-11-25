@@ -103,23 +103,24 @@ class LSH():
         # get all the imageIds which are in the same bucket as the given imageId
         imageId_set = set(image_dict.keys())
         # print(imageId_set)
+         num_total_images = 0
         for i in range(L):
             for j in range(k):
                 temp_imageId = set()
                 for bucket in index_structure['h(' + str(i) + ', ' + str(j) + ')']:
                     if imageId in index_structure['h(' + str(i) + ', ' + str(j) + ')'][str(bucket)]:
                         temp_imageId = temp_imageId.union(set(index_structure['h(' + str(i) + ', ' + str(j) + ')'][str(bucket)]))
+                    num_total_images = num_total_images + len(temp_imageId)
                 imageId_set = imageId_set.intersection(temp_imageId)
         # print(imageId_set)
 
         # calculate similarity and get t nearest images
 
         nearest, num_comparisons = Neighbor.knn_visual_LSH(t, imageId, database, list(imageId_set))
-
-        print("Number of images compared: " + str(num_comparisons))
+        print("Number of non-unique images considered\t: " + str(num_total_images))
+        print("Number of unique images compared\t: " + str(num_comparisons))
         for image in nearest:
             print(image)
-
         exit(1)
 
 
