@@ -217,7 +217,7 @@ class Interface():
         images = self.__graph__.get_images()
         n = G.shape[0]
         s = 0.86
-        maxerr = 0.001
+        maxerr = 0.01
 
         # transform G into markov matrix A
         A = csc_matrix(G, dtype=np.float)
@@ -230,16 +230,21 @@ class Interface():
 
         # Compute pagerank r until we converge
         ro, r = np.zeros(n), np.ones(n)
-        while np.sum(np.abs(r - ro)) > maxerr:
+        # account for sink states
+        Di = sink / float(n)
+        # account for teleportation to state i
+        Ei = np.ones(n) / float(n)
+        # while np.sum(np.abs(r - ro)) > maxerr:
+        for _ in range(150):
+
+            if np.sum(np.abs(r - ro)) <= maxerr:
+                break
             ro = r.copy()
             # calculate each pagerank at a time
             for i in range(0, n):
                 # in-links of state i
                 Ai = np.array(A[:, i].todense())[:, 0]
-                # account for sink states
-                Di = sink / float(n)
-                # account for teleportation to state i
-                Ei = np.ones(n) / float(n)
+
 
                 r[i] = ro.dot(Ai * s + Di * s + Ei * (1 - s))
 
@@ -255,6 +260,7 @@ class Interface():
         # for xx in range(len(weights)):
         #     weightDict[xx] = weights[xx]
         print(listOfImages)
+        show_images(listOfImages, self.__database__)
         pass
 
     @timed
@@ -314,6 +320,7 @@ class Interface():
         for xx in range(k):
             listOfImages.append(images[ReorderedWeights[xx]])
         print(listOfImages)
+        show_images(listOfImages, self.__database__)
         pass
 
     def task5(self, args):
