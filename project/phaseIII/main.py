@@ -37,7 +37,8 @@ class Interface():
         parser.add_argument('-task', type=int, choices=range(1, 7), required=True, metavar='#')
         parser.add_argument('--k', type=int, metavar='#')
         parser.add_argument('--alg', type=str, metavar="algorithm_to_use")
-        parser.add_argument('--imgs', type=str, nargs='+', metavar='imageId')
+        parser.add_argument('--imgs', type=int, nargs='+', metavar='img1 img2 ...')
+        parser.add_argument('--imageId', type=str, nargs='+', metavar='imageId')
         parser.add_argument('--load', type=str, metavar='filepath')
         parser.add_argument('--graph', type=str, metavar='filename')
         parser.add_argument('--layers', type=int, metavar='L')
@@ -314,16 +315,16 @@ class Interface():
     def task5(self, args):
         """
         Use as:
-        -task 5 --layers # --hashes # --k # --imgs #
+        -task 5 --layers # --hashes # --k # --imageId #
         """
         if args.layers == None or args.hashes == None or \
-                args.k == None or args.imgs == None:
+                args.k == None or args.imageId == None:
             raise ValueError('Layers, Hashes, Vectors, K, and IMG must all be defined for task 5.')
 
         layers = int(args.layers)
         hashes = int(args.hashes)
         t = int(args.k)
-        imageId = args.imgs
+        imageId = args.imageId
         if args.vectors:
             vectors = str(args.vectors)
 
@@ -336,7 +337,7 @@ class Interface():
             raise ValueError('Alg must be defined for task 6.')
 
         alg = str(args.alg)
-
+        print(alg)
         # YOUR CODE HERE
         if alg == "knn":
             k = 3
@@ -353,7 +354,8 @@ class Interface():
                     labels.append([i])
                 j = j + 1
             '''
-            result = KNN.knn_algorithm(imageIDs, labels, k, self.__database__)
+            knn = KNN()
+            result = knn.knn_algorithm(imageIDs, labels, k, self.__database__)
             print("result: " + str(result))
 
         elif alg == "ppr":
@@ -406,6 +408,10 @@ class Interface():
             weights = r / float(sum(r))
             orderedWeights = np.argsort(weights)
             ReorderedWeights = np.flipud(orderedWeights)
+            print(ReorderedWeights)
+
+        else:
+            print("In else")
 
             # gotta do something now
 
