@@ -29,7 +29,7 @@ class Distance():
         distances = table.sub(vector, axis='columns').abs().pow(p).sum(1).pow(1/p)
         return distances
     
-   @staticmethod
+    @staticmethod
     def E_distance(vector1, vector2):
         vector1 = np.array(vector1, dtype=np.float)
         vector2 = np.array(vector2, dtype=np.float)

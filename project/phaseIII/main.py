@@ -10,7 +10,7 @@ import numpy.linalg as la
 import scipy.cluster.vq as vq
 from scipy.sparse import csc_matrix
 from task5 import LSH
-from task6 import KNN
+# from task6 import KNN
 
 
 class Interface():
@@ -141,7 +141,9 @@ class Interface():
             k = int(args.k)
             self.__graph__ = Loader.make_graphs(self.__database__, k)
         # visualize graph.
+        self.__graph__.display_text(file='out.txt')
         self.__graph__.display()
+
 
     def task2(self, args):
         if args.k == None:
@@ -184,6 +186,7 @@ class Interface():
         # display
         for image in images:
             self.__graph__.add_to_cluster(image, clusters[image])
+        self.__graph__.display_clusters_text(keys=list_of_clusters, file='task2.txt')
         self.__graph__.display(clusters=list_of_clusters, filename='task2.png')
         print("Clusters in A:", lengOfA)
         print("Clusters in B:", lengOfB)
@@ -200,6 +203,7 @@ class Interface():
                 list_of_clusters1.append(j)
         for image in images:
             self.__graph__.add_to_cluster(image, clusters1[image])
+        self.__graph__.display_clusters_text(keys=list_of_clusters1, file='task2_kspectral.txt')
         self.__graph__.display(clusters=list_of_clusters1, filename='task2_kspectral.png')
         print(lengOfClusters)
 
