@@ -94,20 +94,14 @@ class PPR:
     def ppr_algorithm(self, imageIDs, labels, indexes, G, images):
 
         labelled = {}
-        j = 0
-        for imageId in imageIDs:
+        for j, imageId in enumerate(imageIDs):
             labelled[imageId] = labels[j]
-            j = j + 1
-        # print(labelled)
 
         num_labels = len(set(labels))
         set_labels = frozenset(labels)
-        # print(num_labels, set_labels)
         ind_labels = {}
-        itr = 0
-        for l in set_labels.__iter__():
+        for itr, l in enumerate(set_labels):
             ind_labels[l] = itr
-            itr += 1
         # print("ind_label" + str(ind_labels))
 
         for x in imageIDs:
@@ -122,8 +116,6 @@ class PPR:
         ri, ci = A.nonzero()
         A.data /= rsums[ri]
 
-        # bool array of sink states
-        rsums == 0
 
         temp = 1 / num_labels
         r_labels = np.array([temp] * num_labels * n)
@@ -152,11 +144,13 @@ class PPR:
             if np.sum(np.abs(r - ro)) <= maxerr:
                 break
 
+            print(f'Working: {out_itr}')
+
             ro = r.copy()
             # calculate each pagerank at a time
             for i in range(0, n):
                 # in-links of state i
-                print("Working: " + str(out_itr) + " : " + str(i))
+                # print("Working: " + str(out_itr) + " : " + str(i))
                 Ai = np.array(A[:, i].todense())[:, 0]
                 max_ind = int(np.argmax(Ai))
                 r_labels[i, :] = np.sum([r_labels[i, :], r_labels[max_ind, :]], axis=0)

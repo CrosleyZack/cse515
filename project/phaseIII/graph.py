@@ -366,7 +366,11 @@ class Graph():
         
         # set up colors by cluster label.
         cdict = defaultdict(lambda: 'grey')
+<<<<<<< Updated upstream
         colors = ['blue', 'red', 'green', 'orange', 'pink', 'yellow', 'white', 'black']
+=======
+        colors = ['blue', 'red', 'green', 'yellow', 'white', 'black', 'orange', 'purple']
+>>>>>>> Stashed changes
         for cluster, color in zip(clusters, colors):
             cdict[cluster] = color
 

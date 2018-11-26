@@ -10,7 +10,7 @@ import scipy.cluster.vq as vq
 from scipy.sparse import csc_matrix
 from task5 import LSH
 from loader import Loader
-from task6 import KNN
+from task6 import KNN, PPR
 
 
 class Interface():
@@ -383,11 +383,7 @@ class Interface():
 
             knn = KNN()
             result = knn.knn_algorithm(imageIDs, labels, k, self.__database__)
-            for image in result:
-                self.__graph__.add_to_cluster(image, result[image])
-            self.__graph__.display_clusters_text(keys=clusters, file='task6knn.txt')
-            self.__graph__.display(clusters=clusters, filename='task6knn.png')
-            print("result: " + str(result))
+            # print("result: " + str(result))
 
         elif alg == "ppr":
 
@@ -400,11 +396,17 @@ class Interface():
 
             ppr = PPR()
             result = ppr.ppr_algorithm(imageIDs, labels, indexes, G, images)
-            print("result: " + str(result))
+            # print("result: " + str(result))
 
         else:
-            print("In else")
+            raise ValueError('An invalid algorithm was passed to task 6.')
 
+        
+        for image in result:
+            self.__graph__.add_to_cluster(image, result[image])
+        self.__graph__.display_clusters_text(keys=clusters, file=f'task6{alg}.txt')
+        self.__graph__.display(clusters=clusters, filename=f'task6{alg}.png')
+            
 
     def quit(self, *args):
         """
