@@ -1,5 +1,4 @@
-#! /bin/usr/python3.6
-from loader import Loader
+#! /bin/usr/python3.6 from loader import Loader
 from distance import Similarity
 from graph import Graph
 from os.path import abspath, isdir, isfile
@@ -10,7 +9,8 @@ import numpy.linalg as la
 import scipy.cluster.vq as vq
 from scipy.sparse import csc_matrix
 from task5 import LSH
-# from task6 import KNN
+from loader import Loader
+from task6 import KNN
 
 
 class Interface():
@@ -38,11 +38,12 @@ class Interface():
         parser.add_argument('--k', type=int, metavar='#')
         parser.add_argument('--alg', type=str, metavar="algorithm_to_use")
         parser.add_argument('--imgs', type=int, nargs='+', metavar='img1 img2 ...')
-        parser.add_argument('--imageId', type=str, nargs='+', metavar='imageId')
+        parser.add_argument('--imageId', type=int, metavar='imageId')
         parser.add_argument('--load', type=str, metavar='filepath')
         parser.add_argument('--graph', type=str, metavar='filename')
         parser.add_argument('--layers', type=int, metavar='L')
         parser.add_argument('--hashes', type=int, metavar='k')
+        parser.add_argument('--file', type=str, metavar='filepath')
         # parser.add_argument('--cluster', type=int, metavar='c')
         parser.add_argument('--vectors', type=str)  # Assuming this is a file locaiton
         while True:
@@ -144,7 +145,7 @@ class Interface():
         self.__graph__.display_text(file='out.txt')
         self.__graph__.display()
 
-
+    @timed
     def task2(self, args):
         if args.k == None:
             raise ValueError('K must be defined for task 2.')
@@ -211,6 +212,7 @@ class Interface():
         self.__graph__.display(clusters=list_of_clusters1, filename='task2_kspectral.png')
         print("Second algorithm:\n", lengOfClusters)
 
+    @timed
     def task3(self, args):
         if args.k == None:
             raise ValueError('K must be defined for task 3.')
@@ -327,6 +329,7 @@ class Interface():
         show_images(listOfImages, self.__database__)
         pass
 
+    @timed
     def task5(self, args):
         """
         Use as:
@@ -345,90 +348,63 @@ class Interface():
 
         # YOUR CODE HERE
         lsh = LSH()
-        lsh.main(layers, hashes, imageId, vectors=(), t=t, database=self.__database__)
+        nearest = lsh.main(layers, hashes, imageId, vectors=(), t=t, database=self.__database__)
+        show_images(nearest, self.__database__)
 
+    @timed
     def task6(self, args):
-        if args.alg == None:
+        if args.alg == None and args.file == None:
             raise ValueError('Alg must be defined for task 6.')
+        if not isfile(abspath(args.file)):
+            raise ValueError('File specified was not a valid file.')
+        
+        imageIDs = list()
+        labels = list()
+        with open(args.file, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.isspace():
+                    continue
+                imgid, label = line.split()
+                imageIDs.append(int(imgid))
+                labels.append(label)
+        clusters = set(labels)
 
         alg = str(args.alg)
         print(alg)
+        
         # YOUR CODE HERE
+        
         if alg == "knn":
-            k = 3
-            imageIDs = ['3298433827', '299114458', '948633075', '4815295122', '5898734700', '4027646409', '1806444675',
-                        '4501766904', '6669397377', '3630226176', '3630226176', '3779303606', '4017014699']
-            labels = ['fort', 'sculpture', 'sculpture', 'sculpture', 'sculpture', 'fort', 'fort', 'fort', 'sculpture',
-                      'sculpture', 'sculpture', 'sculpture', 'sculpture']
-            '''
-            j = 0
-            for i in args:
-                if j % 2 == 0:
-                    imageIDs.append([i])
-                else:
-                    labels.append([i])
-                j = j + 1
-            '''
+            if args.k != None:
+                k = int(args.k)
+            else:
+                k = 3
+                
             knn = KNN()
             result = knn.knn_algorithm(imageIDs, labels, k, self.__database__)
+            for image in result:
+                self.__graph__.add_to_cluster(image, result[image])
+            self.__graph__.display_clusters_text(keys=clusters, file='task6knn.txt')
+            self.__graph__.display(clusters=clusters, filename='task6knn.png')
             print("result: " + str(result))
 
         elif alg == "ppr":
+
             G = self.__graph__.get_adjacency()
             images = self.__graph__.get_images()
             indexes = list()
 
-            imageIDs = ['3298433827', '299114458', '948633075', '4815295122', '5898734700', '4027646409', '1806444675',
-                        '4501766904', '6669397377', '3630226176', '3630226176', '3779303606', '4017014699']
-            labels = ['fort', 'sculpture', 'sculpture', 'sculpture', 'sculpture', 'fort', 'fort', 'fort', 'sculpture',
-                      'sculpture', 'sculpture', 'sculpture', 'sculpture']
-
             for x in imageIDs:
                 indexes.append(images.index(x))
-            n = G.shape[0]
-            s = 0.86
-            maxerr = 0.1
 
-            # transform G into markov matrix A
-            A = csc_matrix(G, dtype=np.float)
-            rsums = np.array(A.sum(1))[:, 0]
-            ri, ci = A.nonzero()
-            A.data /= rsums[ri]
-
-            # bool array of sink states
-            sink = rsums == 0
-
-            Ei = np.zeros(n)
-            for ii in indexes:
-                Ei[ii] = 1 / len(imageIDs)
-            # Compute pagerank r until we converge
-            ro, r = np.zeros(n), np.ones(n)
-            # while np.sum(np.abs(r - ro)) > maxerr:
-            for _ in range(100):
-
-                if np.sum(np.abs(r - ro)) <= maxerr:
-                    break
-
-                ro = r.copy()
-                # calculate each pagerank at a time
-                for i in range(0, n):
-                    # in-links of state i
-                    Ai = np.array(A[:, i].todense())[:, 0]
-                    # account for sink states
-                    # Di = sink / float(n)
-                    # account for teleportation to state i
-
-                    r[i] = ro.dot(Ai * s + Ei * (1 - s))
-
-            weights = r / float(sum(r))
-            orderedWeights = np.argsort(weights)
-            ReorderedWeights = np.flipud(orderedWeights)
-            print(ReorderedWeights)
+            ppr = PPR()
+            result = ppr.ppr_algorithm(imageIDs, labels, indexes, G, images)
+            print("result: " + str(result))
 
         else:
             print("In else")
-
-            # gotta do something now
+            
 
     def quit(self, *args):
         """

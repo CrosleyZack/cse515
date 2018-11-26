@@ -85,14 +85,14 @@ class LSH():
         results = self.get_distances(random_vectors, image_dict)
 
         # bucketing code
-        num_buckets = 30
+        num_buckets = 5
         buckets = self.get_buckets(results, num_buckets)
 
         return buckets, random_vectors
 
     def main(self, L=2, k=3, imageId=5175916261, vectors=[], t=5, database=()):
-        imageId = imageId[0]
-        imageId = int(imageId[1:-1])
+        # imageId = imageId[0]
+        # imageId = int(imageId[1:-1])
         image_dict = pd.DataFrame(database.get_vis_table())
         image_dict = image_dict.T
         image_dict = image_dict.to_dict('list')
@@ -103,7 +103,7 @@ class LSH():
         # get all the imageIds which are in the same bucket as the given imageId
         imageId_set = set(image_dict.keys())
         # print(imageId_set)
-         num_total_images = 0
+        num_total_images = 0
         for i in range(L):
             for j in range(k):
                 temp_imageId = set()
@@ -121,7 +121,8 @@ class LSH():
         print("Number of unique images compared\t: " + str(num_comparisons))
         for image in nearest:
             print(image)
-        exit(1)
+
+        return [int(n.id) for n in nearest]
 
 
 if __name__ == '__main__':

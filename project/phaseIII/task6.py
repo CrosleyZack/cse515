@@ -3,6 +3,8 @@ from distance import Similarity
 from distance import Distance
 import pandas as pd
 from util import timed, show_images
+from scipy.sparse import csc_matrix
+import numpy as np
 
 
 class KNN:
@@ -45,26 +47,25 @@ class KNN:
         image_dict = image_dict.T
         image_dict = image_dict.to_dict('list')
 
-        labelled = []
-        j = 0
-        for imageId in imageIds:
-            labelled.append({imageId: labels[j]})
-            j = j + 1
+        labelled = {}
+        for j, imageId in enumerate(imageIds):
+            labelled[imageId] = labels[j]
+            # labelled.append({imageId: labels[j]})
         # print(labelled)
 
         labelled_set = self.get_labelled_set(imageIds, image_dict)
         print("Working")
-        v = 0
-        for image in image_dict:
+        for v, image in enumerate(image_dict):
+            image = int(image)
             if image not in labelled:
                 neighbors = self.get_neighbors(labelled_set, labels, image_dict[image], k)
                 result = self.get_response(neighbors)
-                print(str(v) + " labelled as :" + str(result))
+                # print(str(v) + " labelled as :" + str(result))
                 labels.append(result)
                 imageIds.append(image)
-                labelled.append({image: result})
+                labelled[image] = result
+                # labelled.append({image: result})
                 # labelled_set.append(image_dict[image])
-                v = v + 1
 
         return labelled
 
@@ -85,6 +86,91 @@ class KNN:
         '''
         result = self.knn_algorithm(imageIDs, labels, k, database=())
         print("result: " + str(result))
+        
+        
+class PPR:
+    
+    @timed
+    def ppr_algorithm(self, imageIDs, labels, indexes, G, images):
+
+        labelled = {}
+        j = 0
+        for imageId in imageIDs:
+            labelled[imageId] = labels[j]
+            j = j + 1
+        # print(labelled)
+
+        num_labels = len(set(labels))
+        set_labels = frozenset(labels)
+        # print(num_labels, set_labels)
+        ind_labels = {}
+        itr = 0
+        for l in set_labels.__iter__():
+            ind_labels[l] = itr
+            itr += 1
+        # print("ind_label" + str(ind_labels))
+
+        for x in imageIDs:
+            indexes.append(images.index(x))
+        n = G.shape[0]
+        s = 0.86
+        maxerr = 0.1
+
+        # transform G into markov matrix A
+        A = csc_matrix(G, dtype=np.float)
+        rsums = np.array(A.sum(1))[:, 0]
+        ri, ci = A.nonzero()
+        A.data /= rsums[ri]
+
+        # bool array of sink states
+        rsums == 0
+
+        temp = 1 / num_labels
+        r_labels = np.array([temp] * num_labels * n)
+        r_labels = r_labels.reshape(n, num_labels)
+
+        # account for seed teleportation
+        a = 0
+        Ei = np.zeros(n)
+        for ii in indexes:
+            if a > (len(imageIDs) - 1):
+                break
+            Ei[ii] = (1 / len(imageIDs))
+            this_image = imageIDs[a]
+            current_label = labelled[this_image]
+            ind = int(ind_labels[current_label])
+            r_labels[ii] = np.zeros(num_labels)
+            r_labels[ii][ind] = 1
+            a += 1
+
+        # Compute pagerank r until we converge
+        ro, r = np.zeros(n), np.ones(n)
+
+        # while np.sum(np.abs(r - ro)) > maxerr:
+        for out_itr in range(10):
+
+            if np.sum(np.abs(r - ro)) <= maxerr:
+                break
+
+            ro = r.copy()
+            # calculate each pagerank at a time
+            for i in range(0, n):
+                # in-links of state i
+                print("Working: " + str(out_itr) + " : " + str(i))
+                Ai = np.array(A[:, i].todense())[:, 0]
+                max_ind = int(np.argmax(Ai))
+                r_labels[i, :] = np.sum([r_labels[i, :], r_labels[max_ind, :]], axis=0)
+                r[i] = ro.dot(Ai * s + Ei * (1 - s))
+
+        itr = 0
+        labelled = {}
+        for image in images:
+            label_id = np.argmax(r_labels[itr])
+            label = list(ind_labels.keys())[list(ind_labels.values()).index(label_id)]
+            labelled[image] = label
+            itr += 1
+
+        return labelled
 
 
 if __name__ == '__main__':
