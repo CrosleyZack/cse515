@@ -45,26 +45,25 @@ class KNN:
         image_dict = image_dict.T
         image_dict = image_dict.to_dict('list')
 
-        labelled = []
-        j = 0
-        for imageId in imageIds:
-            labelled.append({imageId: labels[j]})
-            j = j + 1
+        labelled = {}
+        for j, imageId in enumerate(imageIds):
+            labelled[imageId] = labels[j]
+            # labelled.append({imageId: labels[j]})
         # print(labelled)
 
         labelled_set = self.get_labelled_set(imageIds, image_dict)
         print("Working")
-        v = 0
-        for image in image_dict:
+        for v, image in enumerate(image_dict):
+            image = int(image)
             if image not in labelled:
                 neighbors = self.get_neighbors(labelled_set, labels, image_dict[image], k)
                 result = self.get_response(neighbors)
-                print(str(v) + " labelled as :" + str(result))
+                # print(str(v) + " labelled as :" + str(result))
                 labels.append(result)
                 imageIds.append(image)
-                labelled.append({image: result})
+                labelled[image] = result
+                # labelled.append({image: result})
                 # labelled_set.append(image_dict[image])
-                v = v + 1
 
         return labelled
 

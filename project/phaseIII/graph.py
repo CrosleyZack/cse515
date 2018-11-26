@@ -350,7 +350,7 @@ class Graph():
 
     
 
-    def display(self, graph=None, clusters=[], filename='out.png', emphasis=[], emph_color=None):
+    def display(self, graph=None, clusters=[], filename='out.png', emphasis=[], emph_color=None, label=False):
         """
         Show representation of the graph. Saves to a png file so that the image can be viewed in
             image application with more capable zooming opportunities.
@@ -381,7 +381,8 @@ class Graph():
                     else cdict[vertex[Graph.CLUSTER]] for vertex in graph.vs]
         visual_style['vertex_color'] = v_colors
         visual_style['layout'] = graph.layout('drl') # layout optimized for large graphs.
-        #visual_style['vertex_label'] = graph.vs['name'] # display the id on the node.
+        if label:
+            visual_style['vertex_label'] = graph.vs['name'] # display the id on the node.
         #if len(graph.es) > 0:
         #    visual_style['edge_label'] = graph.es[Graph.SIM] # set edge weights to display
 
