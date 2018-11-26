@@ -191,8 +191,11 @@ class Interface():
         print("Clusters in A:", lengOfA)
         print("Clusters in B:", lengOfB)
 
-        xx = c + 1
-        means, labels1 = vq.kmeans2(U[:, 1:xx], c, iter=500)
+        #Algorithm 2
+        l1, u1 = la.eigh(A)
+        u1.sort(axis=1)
+        f1 = u1[:, -c:]
+        means, labels1 = vq.kmeans2(f1, c)
         for j in range(c):
             indices = [i for i, x in enumerate(labels1) if x == j]
             lengOfClusters[j] = len(indices)
@@ -201,11 +204,12 @@ class Interface():
                 clusters1[images[everyIndice]] = cluster
             if not j in list_of_clusters1:
                 list_of_clusters1.append(j)
+
         for image in images:
             self.__graph__.add_to_cluster(image, clusters1[image])
         self.__graph__.display_clusters_text(keys=list_of_clusters1, file='task2_kspectral.txt')
         self.__graph__.display(clusters=list_of_clusters1, filename='task2_kspectral.png')
-        print(lengOfClusters)
+        print("Second algorithm:\n", lengOfClusters)
 
     def task3(self, args):
         if args.k == None:
