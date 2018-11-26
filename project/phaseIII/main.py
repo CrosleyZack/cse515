@@ -357,7 +357,7 @@ class Interface():
             raise ValueError('Alg must be defined for task 6.')
         if not isfile(abspath(args.file)):
             raise ValueError('File specified was not a valid file.')
-        
+
         imageIDs = list()
         labels = list()
         with open(args.file, 'r') as f:
@@ -372,15 +372,15 @@ class Interface():
 
         alg = str(args.alg)
         print(alg)
-        
+
         # YOUR CODE HERE
-        
+
         if alg == "knn":
             if args.k != None:
                 k = int(args.k)
             else:
                 k = 3
-                
+
             knn = KNN()
             result = knn.knn_algorithm(imageIDs, labels, k, self.__database__)
             for image in result:
@@ -404,7 +404,7 @@ class Interface():
 
         else:
             print("In else")
-            
+
 
     def quit(self, *args):
         """

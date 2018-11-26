@@ -366,7 +366,7 @@ class Graph():
         
         # set up colors by cluster label.
         cdict = defaultdict(lambda: 'grey')
-        colors = ['blue', 'red', 'green', 'purple', 'orange', 'yellow', 'white', 'black']
+        colors = ['blue', 'red', 'green', 'orange', 'pink', 'yellow', 'white', 'black']
         for cluster, color in zip(clusters, colors):
             cdict[cluster] = color
 
