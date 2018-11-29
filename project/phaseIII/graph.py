@@ -366,11 +366,7 @@ class Graph():
         
         # set up colors by cluster label.
         cdict = defaultdict(lambda: 'grey')
-<<<<<<< Updated upstream
-        colors = ['blue', 'red', 'green', 'orange', 'pink', 'yellow', 'white', 'black']
-=======
-        colors = ['blue', 'red', 'green', 'yellow', 'white', 'black', 'orange', 'purple']
->>>>>>> Stashed changes
+        colors = ['blue', 'red', 'green', 'yellow', 'white', 'black', 'orange', 'purple', 'grey', 'pink']
         for cluster, color in zip(clusters, colors):
             cdict[cluster] = color
 
@@ -429,6 +425,8 @@ class Graph():
 
         for cluster in keys:
             file.write('CLUSTER = %s\n' % cluster)
+            if not cluster in clusters:
+                continue
             for img in clusters[cluster]:
                 file.write('\t%s\n' % img)
 

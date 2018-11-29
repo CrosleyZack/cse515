@@ -1,13 +1,16 @@
 #! /bin/usr/python3.6 from loader import Loader
 from distance import Similarity
 from graph import Graph
-from os.path import abspath, isdir, isfile
+from os.path import isdir, isfile, join, realpath
+from os import mkdir
 import argparse
-from util import timed, show_images
+from util import timed, show_images, save_images, safe_mkdir, images_to_web
 import numpy as np
 import numpy.linalg as la
 import scipy.cluster.vq as vq
 from scipy.sparse import csc_matrix
+from collections import namedtuple, defaultdict
+from itertools import product
 from task5 import LSH
 from loader import Loader
 from task6 import KNN, PPR
@@ -15,17 +18,24 @@ from task6 import KNN, PPR
 
 class Interface():
 
-    def __init__(self):
+    def __init__(self, runall=False):
         self.__database__ = None
         self.__graph__ = None
         self.__valid_types__ = ['photo', 'user', 'poi']
         self.__vis_models__ = ['CM', 'CM3x3', 'CN', 'CN3x3',
                                'CSD', 'GLRLM', 'GLRLM3x3', 'HOG', 'LBP', 'LBP3x3']
-        self.__io__()
+        self.__io__(runall)
 
-    def __io__(self):
+    def __io__(self, runall=False):
         print("Welcome to the CSE 515 data software. Please enter a command.\
               \nEnter \"help\" for a list of commands.")
+
+        # for precomputing everything.
+        if runall:
+            # self.create_graphs()
+            self.run_two_to_three()
+            # self.run_four_to_six()
+            return
 
         def __filepath__(parser, arg):
             if not isdir(arg):
@@ -34,7 +44,7 @@ class Interface():
                 return True
 
         parser = argparse.ArgumentParser()
-        parser.add_argument('-task', type=int, choices=range(1, 7), required=True, metavar='#')
+        parser.add_argument('-task', type=int, choices=range(0, 7), required=True, metavar='#')
         parser.add_argument('--k', type=int, metavar='#')
         parser.add_argument('--alg', type=str, metavar="algorithm_to_use")
         parser.add_argument('--imgs', type=int, nargs='+', metavar='img1 img2 ...')
@@ -43,6 +53,7 @@ class Interface():
         parser.add_argument('--graph', type=str, metavar='filename')
         parser.add_argument('--layers', type=int, metavar='L')
         parser.add_argument('--hashes', type=int, metavar='k')
+        parser.add_argument('--bins', type=int, metavar='b')
         parser.add_argument('--file', type=str, metavar='filepath')
         # parser.add_argument('--cluster', type=int, metavar='c')
         parser.add_argument('--vectors', type=str)  # Assuming this is a file locaiton
@@ -75,6 +86,9 @@ class Interface():
                 except Exception as e:
                     print('Something went wrong loading the graph.')
                     print(e)
+            
+            if args.task == 0:
+                continue
 
             # Get method with this name - makes it easy to create new interface methods
             #   without having to edit this method.
@@ -101,6 +115,7 @@ class Interface():
                 method = getattr(self, item)
                 print(method.__doc__)
 
+
     def load(self, args):
         """
         Command:\t--load <filepath>
@@ -109,7 +124,7 @@ class Interface():
         \t<filepath> - A valid file path in the system.
         """
 
-        folder = abspath(args.load)
+        folder = realpath(args.load)
 
         if not isdir(folder):
             print("[ERROR] The provided path was not a folder, and therefore not a valid data directory.")
@@ -118,6 +133,7 @@ class Interface():
         self.__database__ = Loader.make_database(folder)
         print("Database loaded successfully.")
 
+
     def graph(self, args):
         """
         Command:\t--graph <filepath>
@@ -125,28 +141,38 @@ class Interface():
         Arguments:
         \t<filepath> a valid file path in the system.
         """
-        f = abspath(args.graph)
+        f = args.graph
 
-        if not isfile(f):
-            print("[ERROR] The provided path was not a valid file.")
-            return
+        if not isfile(realpath(f)):
+            f = f'./precomputed/graph{f}/graph{f}'
+            # print("[ERROR] The provided path was not a valid file.")
+            # return
 
-        self.__graph__ = Graph.load(f)
+        self.__graph__ = Graph.load(realpath(f))
         print('Graph loaded successfully.')
 
+
     @timed
-    def task1(self, args):
+    def task1(self, args, path='.'):
+        """
+        -task 1 --k #.
+        """
         if self.__graph__ == None:
             if args.k == None:
                 raise ValueError('Parameter K must be defined for task 1.')
             k = int(args.k)
-            self.__graph__ = Loader.make_graphs(self.__database__, k)
+            self.__graph__ = Loader.make_graphs(self.__database__, k, path=path)
         # visualize graph.
-        self.__graph__.display_text(file='out.txt')
-        self.__graph__.display()
+        self.__graph__.display_text(file=join(path, f'graph.txt'))
+        self.__graph__.display(filename=join(path, f'task1_.png'))
+    
+
 
     @timed
-    def task2(self, args):
+    def task2(self, args, path='.'):
+        """
+        -task 2 --k #
+        """
         if args.k == None:
             raise ValueError('K must be defined for task 2.')
         c = int(args.k)
@@ -185,10 +211,11 @@ class Interface():
                     list_of_clusters.append(cluster)
 
         # display
-        for image in images:
-            self.__graph__.add_to_cluster(image, clusters[image])
-        self.__graph__.display_clusters_text(keys=list_of_clusters, file='task2.txt')
-        self.__graph__.display(clusters=list_of_clusters, filename='task2.png')
+        # for image in images:
+            # self.__graph__.add_to_cluster(image, clusters[image])
+        # self.__graph__.display_clusters_text(keys=list_of_clusters, file=join(path, 'task2.txt'))
+        # self.__graph__.display(clusters=list_of_clusters, filename=join(path, 'task2.png'))
+        images_to_web(clusters, self.__database__, join(path, 'task2_spectral.html'))
         print("Clusters in A:", lengOfA)
         print("Clusters in B:", lengOfB)
 
@@ -206,14 +233,18 @@ class Interface():
             if not j in list_of_clusters1:
                 list_of_clusters1.append(j)
 
-        for image in images:
-            self.__graph__.add_to_cluster(image, clusters1[image])
-        self.__graph__.display_clusters_text(keys=list_of_clusters1, file='task2_kspectral.txt')
-        self.__graph__.display(clusters=list_of_clusters1, filename='task2_kspectral.png')
+        # for image in images:
+            # self.__graph__.add_to_cluster(image, clusters1[image])
+        # self.__graph__.display_clusters_text(keys=list_of_clusters1, file=join(path, 'task2_kspectral.txt'))
+        # self.__graph__.display(clusters=list_of_clusters1, filename=join(path, 'task2_kspectral.png'))
+        images_to_web(clusters1, self.__database__, join(path, 'task2_kspectral.html'))
         print("Second algorithm:\n", lengOfClusters)
 
     @timed
-    def task3(self, args):
+    def task3(self, args, path='.'):
+        """
+        -task 3 --k # 
+        """
         if args.k == None:
             raise ValueError('K must be defined for task 3.')
         k = int(args.k)
@@ -267,10 +298,13 @@ class Interface():
         #     weightDict[xx] = weights[xx]
         print(listOfImages)
         show_images(listOfImages, self.__database__)
-        pass
+        save_images(listOfImages, self.__database__, join(path, 'out'))
 
     @timed
-    def task4(self, args):
+    def task4(self, args, path='.'):
+        """
+        -task 4 --k # --imgs id1 id2 id3
+        """
         if args.k == None or args.imgs == None:
             raise ValueError('K and Imgs must be defined for task 4.')
         k = int(args.k)
@@ -327,10 +361,11 @@ class Interface():
             listOfImages.append(images[ReorderedWeights[xx]])
         print(listOfImages)
         show_images(listOfImages, self.__database__)
-        pass
+        save_images(listOfImages, self.__database__, join(path, 'out'))
+
 
     @timed
-    def task5(self, args):
+    def task5(self, args, path='.'):
         """
         Use as:
         -task 5 --layers # --hashes # --k # --imageId #
@@ -350,12 +385,17 @@ class Interface():
         lsh = LSH()
         nearest = lsh.main(layers, hashes, imageId, vectors=(), t=t, database=self.__database__)
         show_images(nearest, self.__database__)
+        save_images(nearest, self.__database__, join(path, 'out'))
+
 
     @timed
-    def task6(self, args):
+    def task6(self, args, path='.'):
+        """
+        -task 6 --alg (knn/ppr) --file input/file/path (--k # if knn)
+        """
         if args.alg == None and args.file == None:
             raise ValueError('Alg must be defined for task 6.')
-        if not isfile(abspath(args.file)):
+        if not isfile(realpath(args.file)):
             raise ValueError('File specified was not a valid file.')
 
         imageIDs = list()
@@ -402,10 +442,11 @@ class Interface():
             raise ValueError('An invalid algorithm was passed to task 6.')
 
         
-        for image in result:
-            self.__graph__.add_to_cluster(image, result[image])
-        self.__graph__.display_clusters_text(keys=clusters, file=f'task6{alg}.txt')
-        self.__graph__.display(clusters=clusters, filename=f'task6{alg}.png')
+        # for image in result:
+            #self.__graph__.add_to_cluster(image, result[image])
+        #self.__graph__.display_clusters_text(keys=clusters, file=join(path, f'task6{alg}.txt'))
+        #self.__graph__.display(clusters=clusters, filename=join(path, f'task6{alg}.png'))
+        images_to_web(result, self.__database__, join(path, f'task6{alg}.html'))
             
 
     def quit(self, *args):
@@ -415,6 +456,157 @@ class Interface():
         """
         exit(1)
 
+    
+    def run_two_to_three(self):
+        """
+        Utility to precompute all inputs desired by the professor.
+        """
+        graphs = [3, 10] # 10 
+        task2 = [2,4,10] # 10
+        task3 = [] # [1, 5,10]
+
+        basepath = realpath('./precomputed')
+        safe_mkdir(basepath)
+
+        # Create named tuple to simulate args.
+        fields = ['k', 'alg', 'imgs', 'imageId', 'load', 'graph', 'layers', 'hashes', 'file', 'bins']
+        Args = namedtuple('Arguments', fields)
+        Args.__new__.__defaults__ = (None,) * len(fields)
+
+
+        # call load once.
+        self.load(Args(load='dataset'))
+
+        # graphpath = '/home/crosleyzack/school/fall18/cse515/repo/project/phaseIII/graph/graph'
+        for graph in graphs:
+            # load graph
+            self.graph(Args(graph=f'{graph}'))
+
+            # Create folder for this graph size.
+            working_dir = join(basepath, f'graph{graph}')
+            safe_mkdir(working_dir)
+
+            print(f'Starting task 2 graph {graph}')
+
+            
+            # task 2.
+            task_dir = join(working_dir, 'task2')
+            safe_mkdir(task_dir)
+
+            for k in task2:
+                print(f'\tTask 2, K = {k}')
+                subdir = join(task_dir, f'k{k}')
+                safe_mkdir(subdir)
+                self.task2(Args(k=k), path=subdir)
+
+            print(f'Starting task 3 graph {graph}')
+            
+            # task 3.
+            task_dir = join(working_dir, 'task3')
+            safe_mkdir(task_dir)
+
+            for k in task3:
+                print(f'\tTask 3, K = {k}')
+                subdir = join(task_dir, f'k{k}')
+                safe_mkdir(subdir)
+                self.task3(Args(k=k), path=subdir)
+    
+
+    def run_four_to_six(self):
+        """
+        Utility to precompute all inputs desired by the professor.
+        """
+        graphs = [3,10]
+        task4 = [] # 5,10]
+        task5_k = [5,10]
+        task5_l = (1,5,10)
+        task6_knn = [1,3,10]
+        task6_files = ['task6sample1', 'task6sample2']
+
+        basepath = realpath('./precomputed')
+        safe_mkdir(basepath)
+
+        # Create named tuple to simulate args.
+        fields = ['k', 'alg', 'imgs', 'imageId', 'load', 'graph', 'layers', 'hashes', 'file', 'bins']
+        Args = namedtuple('Arguments', fields)
+        Args.__new__.__defaults__ = (None,) * len(fields)
+
+
+        # call load once.
+        self.load(Args(load='dataset'))
+
+        # graphpath = '/home/crosleyzack/school/fall18/cse515/repo/project/phaseIII/graph/graph'
+        for graph in graphs:
+            # load graph
+            self.graph(Args(graph=f'{graph}'))
+
+            # Create folder for this graph size.
+            working_dir = join(basepath, f'graph{graph}')
+            safe_mkdir(working_dir)
+
+            print(f'Starting task 4 graph {graph}')
+
+            # task 4.
+            task_dir = join(working_dir, 'task4')
+            safe_mkdir(task_dir)
+            task4_images = [[2976144, 3172496917, 2614355710], [27483765, 2492987710, 487287905]]
+            # used list from submission sample.
+
+            for k, images in product(task4, task4_images):
+                subdir = join(task_dir, f'k{k}img{images[0]}') # include first image in dir name.
+                safe_mkdir(subdir)
+                self.task4(Args(k=k, imgs=images), path=subdir)
+
+            """
+            # task 5.
+            task_dir = join(working_dir, 'task5')
+            safe_mkdir(task_dir)
+            hashes = 5 # no set value. Just generated one at random.
+
+            for k in task5_k:
+                subdir = join(task_dir, f'k{k}l{l}')
+                safe_mkdir(subdir)
+                self.task5(Args(k=k, layers=l, hashes=hashes))
+
+            print(f'Starting task 6 graph {graph}')
+            """
+
+            # task 6.
+            task_dir = join(working_dir, 'task6')
+            safe_mkdir(task_dir)
+
+            for k, f in product(task6_knn, task6_files):
+                subdir = join(task_dir, f'knn_k{k}_file{f}')
+                safe_mkdir(subdir)
+                self.task6(Args(alg='knn', file=f, k=k), path=subdir)
+            
+            for f in task6_files:
+                subdir = join(task_dir, 'ppr')
+                safe_mkdir(subdir)
+                self.task6(Args(alg='ppr', file=f), path=subdir)
+          
+
+            
+    def create_graphs(self):
+        fields = ['k', 'alg', 'imgs', 'imageId', 'load', 'graph', 'layers', 'hashes', 'file', 'bins']
+        Args = namedtuple('Arguments', fields)
+        Args.__new__.__defaults__ = (None,) * len(fields)
+
+        basepath = realpath('./precomputed')
+        safe_mkdir(basepath)
+
+        graphpath = '/home/crosleyzack/school/fall18/cse515/repo/project/phaseIII/graph/graph'
+        for graph in range(3,11):
+            self.graph(Args(graph=f'{graph}'))
+
+            # Create folder for this graph size.
+            working_dir = join(basepath, f'graph{graph}')
+            safe_mkdir(working_dir)
+            self.task1(Args(k=graph), path=working_dir)
+
+
+
+
 
 if __name__ == '__main__':
-    Interface()
+    Interface(runall=True)

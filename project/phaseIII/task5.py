@@ -109,9 +109,9 @@ class LSH():
                 temp_imageId = set()
                 for bucket in index_structure['h(' + str(i) + ', ' + str(j) + ')']:
                     if imageId in index_structure['h(' + str(i) + ', ' + str(j) + ')'][str(bucket)]:
-                        temp_imageId = temp_imageId.union(set(index_structure['h(' + str(i) + ', ' + str(j) + ')'][str(bucket)]))
+                        temp_imageId = temp_imageId.intersection(set(index_structure['h(' + str(i) + ', ' + str(j) + ')'][str(bucket)]))
                     num_total_images = num_total_images + len(temp_imageId)
-                imageId_set = imageId_set.intersection(temp_imageId)
+                imageId_set = imageId_set.union(temp_imageId)
         # print(imageId_set)
 
         # calculate similarity and get t nearest images

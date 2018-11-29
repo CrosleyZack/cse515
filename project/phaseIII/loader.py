@@ -2,7 +2,7 @@
 
 from lxml import etree
 from os import listdir, path
-from os.path import isfile, isdir, join
+from os.path import isfile, isdir, join, abspath
 from util import timed
 from database import Database
 from multiprocessing import Pool
@@ -233,7 +233,13 @@ class Loader():
 
     @staticmethod
     @timed
-    def make_graphs(db, k=10):
+    def make_graphs(db, k=None, all_ks=list(range(10)), path='.'):
+
+        if k == None:
+            k = max(all_ks)
+        else:
+            all_ks = [k]
+
         all_photos = db.get_vis_table()
         similarity = Similarity.cosine_similarity(all_photos, all_photos)
         assert(similarity.shape[0] == similarity.shape[1])
@@ -252,19 +258,22 @@ class Loader():
                 edge_dict[row.name][key] = sorted_row[key]
         
 
-        for nearest in range(k, 0, -1):
+        all_ks.sort(reverse=True)
+        for nearest in all_ks:
 
             # get rid of smallest item.
             print('Working on graph %s.' % nearest)
-            for key in edge_dict:
-                min_key = min(edge_dict[key], key=edge_dict[key].get)
-                edge_dict[key].pop(min_key)
+            working = edge_dict.copy()
+            for key in working:
+                while len(working[key]) > k:
+                    min_key = min(working[key], key=working[key].get)
+                    working[key].pop(min_key)
 
             print('\tSimilarity graph for %s created.' % nearest)
             
-            location = join('graph', 'graph' + str(nearest))
             g = Graph()
-            g.add_edge_dict(edge_dict)
+            g.add_edge_dict(working)
+            location = abspath(join(path, 'graph' + str(nearest)))
             g.display(filename=location+'.png')
             g.save(location=location)
         
