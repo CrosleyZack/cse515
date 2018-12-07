@@ -317,7 +317,7 @@ class Interface():
         for x in imgs:
             indexes.append(images.index(x))
         n = G.shape[0]
-        s = 0.86
+        s = 0.6
         maxerr = 0.1
 
         # transform G into markov matrix A
@@ -346,10 +346,10 @@ class Interface():
                 # in-links of state i
                 Ai = np.array(A[:, i].todense())[:, 0]
                 # account for sink states
-                # Di = sink / float(n)
+                Di = sink / float(n)
                 # account for teleportation to state i
 
-                r[i] = ro.dot(Ai * s + Ei * (1 - s))
+                r[i] = ro.dot(Ai * s + Di*s + Ei * (1 - s))
 
         weights = r / float(sum(r))
         orderedWeights = np.argsort(weights)
@@ -395,6 +395,7 @@ class Interface():
         """
         if args.alg == None and args.file == None:
             raise ValueError('Alg must be defined for task 6.')
+        
         if not isfile(realpath(args.file)):
             raise ValueError('File specified was not a valid file.')
 
@@ -609,4 +610,4 @@ class Interface():
 
 
 if __name__ == '__main__':
-    Interface(runall=True)
+    Interface(runall=False)
