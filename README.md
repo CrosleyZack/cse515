@@ -1,5 +1,5 @@
 # CSE515
-Code developed for CSE 515 class.
+Code developed for CSE 515 Multimedia Web Databases class.
 
 The code was written using Python 3.7.0, but any recent Python 3 version should work.
 
