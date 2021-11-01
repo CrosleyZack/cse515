@@ -1,0 +1,5 @@
+* Description
+This was an individual project done be each member of the group to implement the basic functionality the later phases will be built on top of. This involved reading in metadata about a series of locations into a database, calculating similarity measures between two locations based on these features, and finding closely related locations.
+
+* Implementation
+For this phase, I used a SQL database. While I got all the functionality working, the result was too slow to use for future steps. As part of my attempts to speed up other parts of the code, I implemented parallel KNN clustering. This was insufficient to make up for the slow database, but was useful in later phases with a new database implementation.
