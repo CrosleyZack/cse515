@@ -1,0 +1,7 @@
+* Description
+
+This phase required the identification of feature vectors based on Singular Vector Decomposition, Latent Dirichlet Allocation, and Principal Component Analysis. Code was to take in the information about the types of location data to use, decompose into k feature vectors using a method provided, and identify the most similar locations based on those feature vectors.
+
+* Implementation
+
+Unfortunately, none of our groups databases were sufficiently fast from Phase I. I rebuilt our database from the ground up using Pandas for efficiency. This new implementation allowed us to develop the SVD, LDA and PCA analysis components off an efficient database, which could leverage the parallel KNN I built in Phase I. Our implementation of this was very fast for Python code.
