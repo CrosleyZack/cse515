@@ -1,0 +1,12 @@
+* Introduction
+
+The project for CSE 515 was organized into three distinct phases:
+
+** Phase 1
+This was an individual project done be each member of the group to implement the basic functionality the later phases will be built on top of. This involved reading in metadata about a series of locations into a database, calculating similarity measures between two locations based on these features, and finding closely related locations.
+  
+** Phase 2
+This phase required the identification of feature vectors based on Singular Vector Decomposition, Latent  Dirichlet Allocation, and Principal Component Analysis. Code was to take in the information about the types of location data to use, decompose into k feature vectors using a method provided, and identify the most similar locations based on those feature vectors.
+
+** Phase 3
+This phase required reading in a graph data structure of data and grouping nodes based on features. Computed the PageRank and Locality Sensitive Hashes of graph elements. Clustered data based on KNN, LSH, and PPR algorithms.
